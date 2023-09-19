@@ -1,8 +1,14 @@
 package com.bolsadeideas.springboot.reactor.app;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.CountDownLatch;
 
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -35,7 +41,12 @@ public class SpringBootReactorApplication implements CommandLineRunner {
 		// ejemploUsuarioComentariosFlatMap();
 		//ejemploUsuarioComentariosZipWith();
 		//ejemploUsuarioComentariosZipWith2();
-		ejemploZipWithRangos();
+		//ejemploZipWithRangos();
+		//ejemploInterval();
+		//ejemploDelayElements();
+		//ejemploIntervaloInfinito();
+		//ejemploIntervaloDesdeCreate();
+		ejemploContraPresion2();
 	}
 
 	public void ejemploIterable() throws Exception {
@@ -221,6 +232,122 @@ public class SpringBootReactorApplication implements CommandLineRunner {
 		.subscribe(texto -> Log.info(texto));
 		
 		
+	}
+	
+	public void ejemploInterval() {
+		Flux<Integer> rango = Flux.range(1, 12);
+		Flux<Long> retraso = Flux.interval(Duration.ofSeconds(1));
+		
+		rango.zipWith(retraso, (ra, re) -> ra)
+		.doOnNext(i-> Log.info(i.toString()))
+		.blockLast();
+	}
+	
+	public void ejemploDelayElements() throws InterruptedException {
+		Flux<Integer> rango = Flux.range(1, 12)
+				.delayElements(Duration.ofSeconds(1))
+				.doOnNext(i->Log.info(i.toString()))
+				;
+		
+		rango.blockLast(); // mejor usar este
+		rango.subscribe();
+		Thread.sleep(13000);
+		//rango.zipWith(retraso, (ra, re) -> ra)
+		//.doOnNext(i-> Log.info(i.toString()))
+		//.blockLast();
+	}
+	
+	public void ejemploIntervaloInfinito() throws InterruptedException {
+		CountDownLatch latch = new CountDownLatch(1);
+		
+		Flux.interval(Duration.ofSeconds(1))
+		.doOnTerminate(() -> latch.countDown())
+		.flatMap(i-> {
+			if (i>=5) {
+				return Flux.error(new InterruptedException("Solo hasta 5!!"));
+			}
+			return Flux.just(i);
+		})
+		.map(i->"hola" + i)
+		.retry(2)
+		.doOnNext(s->Log.info(s))
+		.subscribe(s->Log.info(s), e->Log.error(e.getMessage()));
+		
+		latch.await();
+	}
+	
+	public void ejemploIntervaloDesdeCreate() throws InterruptedException {
+		Flux.create(emmitter -> {
+			Timer timer = new Timer();
+			timer.schedule(new TimerTask() {
+
+				private Integer contador = 0;
+
+				@Override
+				public void run() {
+					emmitter.next(contador++);
+					if (contador == 10) {
+						emmitter.complete();
+					}
+					if (contador == 5) {
+						timer.cancel();
+						emmitter.error(new InterruptedException("Error, se ha detenido el flux en 5!"));
+					}
+
+				}
+
+			}, 1000, 1000);
+		}).subscribe(next -> Log.info(next.toString()), error -> Log.error(error.getMessage()),
+				() -> Log.info("Hemos Terminado!!"));
+	}
+	
+	public void ejemploContraPresion() {
+		Flux.range(1, 10)
+		.log()
+		.subscribe(  new Subscriber<Integer>() {
+			
+			private Subscription s;
+			private Integer limit = 5;
+			private Integer consume = 0;
+			@Override
+			public void onSubscribe(Subscription s) {
+				this.s = s;
+				s.request(limit);
+				
+			}
+
+			@Override
+			public void onNext(Integer t) {
+				Log.info(t.toString());
+				consume++;
+				if (consume == limit) {
+					consume = 0;
+					s.request(limit);
+				}
+				
+			}
+
+			@Override
+			public void onError(Throwable t) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void onComplete() {
+				// TODO Auto-generated method stub
+				
+			}
+
+			
+		}   );
+	}
+	
+	public void ejemploContraPresion2() {
+		Flux.range(1, 10)
+		.log()
+		.limitRate(5)
+		.subscribe();
 	}
 
 }
