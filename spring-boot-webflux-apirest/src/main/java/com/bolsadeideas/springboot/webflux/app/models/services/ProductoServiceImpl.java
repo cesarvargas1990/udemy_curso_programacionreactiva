@@ -16,10 +16,10 @@ public class ProductoServiceImpl implements ProductoService{
 
 	@Autowired
 	private ProductoDao dao;
-	
+
 	@Autowired
 	private CategoriaDao categoriaDao;
-	
+
 	@Override
 	public Flux<Producto> findAll() {
 		return dao.findAll();

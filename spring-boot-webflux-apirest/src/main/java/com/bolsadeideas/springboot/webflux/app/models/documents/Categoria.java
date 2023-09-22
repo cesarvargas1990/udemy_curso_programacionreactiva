@@ -7,13 +7,13 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document(collection = "categorias")
 public class Categoria {
-	
+
 	@Id
 	@NotEmpty
 	private String id;
-	
+
 	private String nombre;
-	
+
 	public Categoria() {
 	}
 
@@ -36,6 +36,6 @@ public class Categoria {
 	public void setNombre(String nombre) {
 		this.nombre = nombre;
 	}
-	
+
 
 }
