@@ -21,12 +21,12 @@ public class SpringBootWebfluxApirestApplication implements CommandLineRunner{
 
 	@Autowired
 	private ProductoService service;
-
+	
 	@Autowired
 	private ReactiveMongoTemplate mongoTemplate;
-
+	
 	private static final Logger log = LoggerFactory.getLogger(SpringBootWebfluxApirestApplication.class);
-
+	
 	public static void main(String[] args) {
 		SpringApplication.run(SpringBootWebfluxApirestApplication.class, args);
 	}
@@ -35,12 +35,12 @@ public class SpringBootWebfluxApirestApplication implements CommandLineRunner{
 	public void run(String... args) throws Exception {
 		mongoTemplate.dropCollection("productos").subscribe();
 		mongoTemplate.dropCollection("categorias").subscribe();
-
+		
 		Categoria electronico = new Categoria("Electrónico");
 		Categoria deporte = new Categoria("Deporte");
 		Categoria computacion = new Categoria("Computación");
 		Categoria muebles = new Categoria("Muebles");
-
+		
 		Flux.just(electronico, deporte, computacion, muebles)
 		.flatMap(service::saveCategoria)
 		.doOnNext(c ->{
@@ -62,7 +62,7 @@ public class SpringBootWebfluxApirestApplication implements CommandLineRunner{
 					})
 		)
 		.subscribe(producto -> log.info("Insert: " + producto.getId() + " " + producto.getNombre()));
-
+		
 	}
 
 }
