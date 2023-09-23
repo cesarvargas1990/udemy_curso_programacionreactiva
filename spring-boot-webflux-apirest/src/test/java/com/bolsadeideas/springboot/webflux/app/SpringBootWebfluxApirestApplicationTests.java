@@ -27,19 +27,19 @@ import reactor.core.publisher.Mono;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 public class SpringBootWebfluxApirestApplicationTests {
-
+	
 	@Autowired
 	private WebTestClient client;
-
+	
 	@Autowired
 	private ProductoService service;
-
+	
 	@Value("${config.base.endpoint}")
 	private String url;
 
 	@Test
 	public void listarTest() {
-
+		
 		client.get()
 		.uri(url)
 		.accept(MediaType.APPLICATION_JSON_UTF8)
@@ -52,17 +52,17 @@ public class SpringBootWebfluxApirestApplicationTests {
 			productos.forEach(p -> {
 				System.out.println(p.getNombre());
 			});
-
+			
 			Assertions.assertThat(productos.size()>0).isTrue();
 		});
 		//.hasSize(9);
 	}
-
+	
 	@Test
 	public void verTest() {
-
+		
 		Producto producto = service.findByNombre("TV Panasonic Pantalla LCD").block();
-
+		
 		client.get()
 		.uri(url + "/{id}", Collections.singletonMap("id", producto.getId()))
 		.accept(MediaType.APPLICATION_JSON_UTF8)
@@ -80,14 +80,14 @@ public class SpringBootWebfluxApirestApplicationTests {
 		.jsonPath("$.id").isNotEmpty()
 		.jsonPath("$.nombre").isEqualTo("TV Panasonic Pantalla LCD");*/
 	}
-
+	
 	@Test
 	public void crearTest() {
-
+		
 		Categoria categoria = service.findCategoriaByNombre("Muebles").block();
-
+		
 		Producto producto = new Producto("Mesa comedor", 100.00, categoria);
-
+		
 		client.post().uri(url)
 		.contentType(MediaType.APPLICATION_JSON_UTF8)
 		.accept(MediaType.APPLICATION_JSON_UTF8)
@@ -103,11 +103,11 @@ public class SpringBootWebfluxApirestApplicationTests {
 
 	@Test
 	public void crear2Test() {
-
+		
 		Categoria categoria = service.findCategoriaByNombre("Muebles").block();
-
+		
 		Producto producto = new Producto("Mesa comedor", 100.00, categoria);
-
+		
 		client.post().uri(url)
 		.contentType(MediaType.APPLICATION_JSON_UTF8)
 		.accept(MediaType.APPLICATION_JSON_UTF8)
@@ -124,16 +124,16 @@ public class SpringBootWebfluxApirestApplicationTests {
 			Assertions.assertThat(p.getCategoria().getNombre()).isEqualTo("Muebles");
 		});
 	}
-
+	
 	@Test
 	public void editarTest() {
-
+		
 		Producto producto = service.findByNombre("Sony Notebook").block();
 		Categoria categoria = service.findCategoriaByNombre("Electrónico").block();
-
+		
 		Producto productoEditado = new Producto("Asus Notebook", 700.00, categoria);
-
-		client.put().uri(url + "/"+producto.getId())
+		
+		client.put().uri(url + "/{id}", Collections.singletonMap("id", producto.getId()))
 		.contentType(MediaType.APPLICATION_JSON_UTF8)
 		.accept(MediaType.APPLICATION_JSON_UTF8)
 		.body(Mono.just(productoEditado), Producto.class)
@@ -144,21 +144,21 @@ public class SpringBootWebfluxApirestApplicationTests {
 		.jsonPath("$.id").isNotEmpty()
 		.jsonPath("$.nombre").isEqualTo("Asus Notebook")
 		.jsonPath("$.categoria.nombre").isEqualTo("Electrónico");
-
+		
 	}
-
+	
 	@Test
 	public void eliminarTest() {
-		Producto producto = service.findByNombre("Mica 5 Cajones").block();
+		Producto producto = service.findByNombre("Mica Cómoda 5 Cajones").block();
 		client.delete()
-		.uri(url + "/"+producto.getId())
+		.uri(url + "/{id}", Collections.singletonMap("id", producto.getId()))
 		.exchange()
 		.expectStatus().isNoContent()
 		.expectBody()
 		.isEmpty();
-
+		
 		client.get()
-		.uri(url + "/"+producto.getId())
+		.uri(url + "/{id}", Collections.singletonMap("id", producto.getId()))
 		.exchange()
 		.expectStatus().isNotFound()
 		.expectBody()
