@@ -40,4 +40,6 @@ curl --location --request GET 'localhost:8560/api/client/' \
     }
 }'
 
-mirar los ejemplos y codigo para realizar las otras peticiones
+mirar los ejemplos y codigo para realizar las otras peticiones y el ejemplo de subir archivos
+
+la carpeta sola: spring-boot-webflux tiene el ejemplo basico con un pequeño front
